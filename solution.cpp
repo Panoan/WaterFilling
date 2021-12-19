@@ -15,7 +15,7 @@ const double TargetAccuracy = 1e-5;
 // How many water
 const double WaterSum = 1;
 
-// If abs(LastLoss) >= StepControlThreshold * abs(CurrentLoss), 
+// If abs(PrevLoss) >= StepControlThreshold * abs(CurrentLoss), 
 // we will divide the StepPerCycle by StepDivider
 const double StepControlThreshold = 0.5;
 const double StepDivider = 2;
@@ -74,18 +74,18 @@ double CaculateLoss(vector<double>& Alpha,
     return Loss;
 }
 
-// LastLoss: for StepController to dertermine whether
+// PrevLoss: for StepController to dertermine whether
 // it should make the step smaller for the next cycle
-double LastLoss;
+double PrevLoss;
 // StepController: make the step smaller when abs(Loss)
 // does not converge.
 int StepCount = 0;
 // Returns a double var of updated StepPerCycle
 void StepController(double CurrentLoss) {
-    if (abs(CurrentLoss) <= StepControlThreshold * abs(LastLoss))
+    if (abs(CurrentLoss) <= StepControlThreshold * abs(PrevLoss))
         StepPerCycle /= StepDivider;
-    if (abs(CurrentLoss) > abs(LastLoss) 
-        || SgnDiff(CurrentLoss, LastLoss)) {
+    if (abs(CurrentLoss) > abs(PrevLoss) 
+        || SgnDiff(CurrentLoss, PrevLoss)) {
         StepPerCycle /= StepDivider;
         StepPerCycle = - StepPerCycle;
     }
@@ -99,11 +99,11 @@ double Optimizer(vector<double>& Alpha,
                  double y) {
     // double CurrentLoss = CaculateLoss(Alpha, y);
     // if (abs(CurrentLoss) <= ExpectedLoss) {
-    //     LastLoss = CurrentLoss;
+    //     PrevLoss = CurrentLoss;
     //     return y;
     // } else {
     //     StepController(CurrentLoss);
-    //     LastLoss = CurrentLoss;
+    //     PrevLoss = CurrentLoss;
     //     y += StepPerCycle;
     //     return Optimizer(Alpha, y);
     // }
@@ -112,14 +112,14 @@ double Optimizer(vector<double>& Alpha,
     // WILL CAUSE STACK OVERFLOW if n >= 500
     // Use while conditionals instead
     double CurrentLoss = CaculateLoss(Alpha, y);
-    LastLoss = CurrentLoss;
+    PrevLoss = CurrentLoss;
     while (abs(CurrentLoss) > ExpectedLoss) {
         StepController(CurrentLoss);
-        LastLoss = CurrentLoss;
+        PrevLoss = CurrentLoss;
         y += StepPerCycle;
         CurrentLoss = CaculateLoss(Alpha, y);
     }
-    LastLoss = CurrentLoss;
+    PrevLoss = CurrentLoss;
     return y;
 }
 
@@ -139,7 +139,7 @@ int main() {
 
     double ExpectedY = Optimizer(Alpha, AlphaiMin);
 
-    cout << ExpectedY << "\t" << LastLoss << "\t"
+    cout << ExpectedY << "\t" << PrevLoss << "\t"
          << StepCount << endl;
     return 0;
 }
