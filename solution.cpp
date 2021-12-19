@@ -11,13 +11,13 @@ using namespace std;
 // When CurrentAccuracy is not greater than 
 // TargetAccuracy, we consider the x_i^* as the 
 // optimal value.
-const double TargetAccuracy = 0.1;
+const double TargetAccuracy = 1e-5;
 // How many water
 const double WaterSum = 1;
 
 // If abs(LastLoss) >= StepControlThreshold * abs(CurrentLoss), 
 // we will divide the StepPerCycle by StepDivider
-const double StepControlThreshold = 0.7;
+const double StepControlThreshold = 0.5;
 const double StepDivider = 2;
 
 // RandomAlphaGenerator will generator a array of
@@ -32,6 +32,14 @@ double StepPerCycle = (AlphaiMax - AlphaiMin) / 10;
 ///////////////////////////////////////////////////////
 //                     Utils                         //
 ///////////////////////////////////////////////////////
+
+// if sgn(x)m == sgn(y) return 0, else return 1
+bool SgnDiff(double x, double y) {
+    if ((x >= 0 && y <= 0) || (x <= 0 && y >= 0))
+        return 1;
+    else 
+        return 0;
+}
 
 vector<double> RandomAlphaGenerator(
     int /* how many \alpha_i to generate = */ AlphaiCount) {
@@ -68,7 +76,7 @@ double CaculateLoss(vector<double>& Alpha,
 
 // LastLoss: for StepController to dertermine whether
 // it should make the step smaller for the next cycle
-double LastLoss = AlphaiMax;
+double LastLoss;
 // StepController: make the step smaller when abs(Loss)
 // does not converge.
 int StepCount = 0;
@@ -76,6 +84,13 @@ int StepCount = 0;
 void StepController(double CurrentLoss) {
     if (abs(CurrentLoss) <= StepControlThreshold * abs(LastLoss))
         StepPerCycle /= StepDivider;
+    if (abs(CurrentLoss) > abs(LastLoss) 
+        || SgnDiff(CurrentLoss, LastLoss)) {
+        StepPerCycle /= StepDivider;
+        StepPerCycle = - StepPerCycle;
+    }
+        
+    StepCount++;
     return;
 }
 
@@ -96,7 +111,8 @@ double Optimizer(vector<double>& Alpha,
     // SHOULD NOT USE RECURSION 
     // WILL CAUSE STACK OVERFLOW if n >= 500
     // Use while conditionals instead
-    double CurrentLoss = LastLoss;
+    double CurrentLoss = CaculateLoss(Alpha, y);
+    LastLoss = CurrentLoss;
     while (abs(CurrentLoss) > ExpectedLoss) {
         StepController(CurrentLoss);
         LastLoss = CurrentLoss;
