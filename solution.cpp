@@ -10,15 +10,22 @@ using namespace std;
 
 // When CurrentAccuracy is not greater than 
 // TargetAccuracy, we consider the x_i^* as the 
-// optimal value.                                  
+// optimal value.
 const double TargetAccuracy = 0.1;
+// How many water
+const double WaterSum = 1;
+
+// If abs(LastLoss) >= StepControlThreshold * abs(CurrentLoss), 
+// we will divide the StepPerCycle by StepDivider
+const double StepControlThreshold = 0.7;
+const double StepDivider = 2;
 
 // RandomAlphaGenerator will generator a array of
 // \alpha_i where each \alpha_i is not bigger than 
 // AlphaiMax and not smaller than AlphaiMin     
 const double AlphaiMax = 2;
 const double AlphaiMin = 1;
-
+double ExpectedLoss = TargetAccuracy * (AlphaiMax - AlphaiMin);
 // Default StepPerCycle
 double StepPerCycle = (AlphaiMax - AlphaiMin) / 10;
 
@@ -28,6 +35,7 @@ double StepPerCycle = (AlphaiMax - AlphaiMin) / 10;
 
 vector<double> RandomAlphaGenerator(
     int /* how many \alpha_i to generate = */ AlphaiCount) {
+    // initialize rand function
     time_t t;
     srand((unsigned) time(&t));
     vector<double> Alpha;
@@ -44,9 +52,18 @@ vector<double> RandomAlphaGenerator(
 // Loss caculator.
 // Loss Function: L = \sum \max{0, 1/v^* - \alpha_i} - 1
 // We make abs(L) as small as possible
-double CaculateLoss(vector<double>* Alpha,
-                    double x) {
-    return 0;
+double CaculateLoss(vector<double>& Alpha,
+                    double y) {
+    // We first caculate the sum of the 'water'
+    // then get the loss by L = S - 1.
+    double Sum = 0;
+    for(vector<double>::iterator iter = Alpha.begin();
+        iter != Alpha.end(); iter++) {
+        if (y > *iter)
+            Sum += y - *iter;
+    }
+    double Loss = Sum - WaterSum;
+    return Loss;
 }
 
 // LastLoss: for StepController to dertermine whether
@@ -54,15 +71,40 @@ double CaculateLoss(vector<double>* Alpha,
 double LastLoss = AlphaiMax;
 // StepController: make the step smaller when abs(Loss)
 // does not converge.
+int StepCount = 0;
 // Returns a double var of updated StepPerCycle
-double StepController() {
-    return 0;
+void StepController(double CurrentLoss) {
+    if (abs(CurrentLoss) <= StepControlThreshold * abs(LastLoss))
+        StepPerCycle /= StepDivider;
+    return;
 }
 
 // Optimizer, core function
-double Optimizer(vector<double>* Alpha,
-                 double x) {
-    return 0;
+double Optimizer(vector<double>& Alpha,
+                 double y) {
+    // double CurrentLoss = CaculateLoss(Alpha, y);
+    // if (abs(CurrentLoss) <= ExpectedLoss) {
+    //     LastLoss = CurrentLoss;
+    //     return y;
+    // } else {
+    //     StepController(CurrentLoss);
+    //     LastLoss = CurrentLoss;
+    //     y += StepPerCycle;
+    //     return Optimizer(Alpha, y);
+    // }
+
+    // SHOULD NOT USE RECURSION 
+    // WILL CAUSE STACK OVERFLOW if n >= 500
+    // Use while conditionals instead
+    double CurrentLoss = LastLoss;
+    while (abs(CurrentLoss) > ExpectedLoss) {
+        StepController(CurrentLoss);
+        LastLoss = CurrentLoss;
+        y += StepPerCycle;
+        CurrentLoss = CaculateLoss(Alpha, y);
+    }
+    LastLoss = CurrentLoss;
+    return y;
 }
 
 int main() {
@@ -79,5 +121,9 @@ int main() {
         cout << *iter;
     } cout << "]" << endl;
 
+    double ExpectedY = Optimizer(Alpha, AlphaiMin);
 
+    cout << ExpectedY << "\t" << LastLoss << "\t"
+         << StepCount << endl;
+    return 0;
 }
