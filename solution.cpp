@@ -42,12 +42,12 @@ bool SgnDiff(double x, double y) {
 }
 
 vector<double> RandomAlphaGenerator(
-    int /* how many \alpha_i to generate = */ AlphaiCount) {
+    int /* how many \alpha_i to generate = */ AlphaDim) {
     // initialize rand function
     time_t t;
     srand((unsigned) time(&t));
     vector<double> Alpha;
-    for(int i = 0; i < AlphaiCount; i++) {
+    for(int i = 0; i < AlphaDim; i++) {
         double ZeroOneRand;
         ZeroOneRand = (double) (rand() % 999) / 999;
         Alpha.push_back(
@@ -125,12 +125,12 @@ double Optimizer(vector<double>& Alpha,
 
 int main() {
     cout << "Enter the count of channels: ";
-    int AlphaiCount; 
-    cin >> AlphaiCount; cout << endl;
+    int AlphaDim; // Dimension of Alpha 
+    cin >> AlphaDim; cout << endl;
 
     // print the Alpha sequence
     cout << "Alpha = [";
-    vector<double> Alpha = RandomAlphaGenerator(AlphaiCount);
+    vector<double> Alpha = RandomAlphaGenerator(AlphaDim);
     for (vector<double>::iterator iter = Alpha.begin();
          iter != Alpha.end(); iter++) {
         if (iter != Alpha.begin()) cout << ", ";
