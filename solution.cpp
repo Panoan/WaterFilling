@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 using namespace std;
 
 //////////////////////////////////////////////////////
@@ -124,6 +125,11 @@ double Optimizer(vector<double>& Alpha,
 }
 
 int main() {
+    cout << "Reading Config: " << endl
+         << "TargetAccuracy = " << TargetAccuracy << ",\t"
+         << "AlphaiMin = " << AlphaiMin << ",\t"
+         << "AlphaiMax = " << AlphaiMax << endl;
+
     cout << "Enter the count of channels: ";
     int AlphaDim; // Dimension of Alpha 
     cin >> AlphaDim; cout << endl;
@@ -134,12 +140,15 @@ int main() {
     for (vector<double>::iterator iter = Alpha.begin();
          iter != Alpha.end(); iter++) {
         if (iter != Alpha.begin()) cout << ", ";
+        // printf("%f", *iter);
         cout << *iter;
     } cout << "]" << endl;
 
     double ExpectedY = Optimizer(Alpha, AlphaiMin);
 
-    cout << ExpectedY << "\t" << PrevLoss << "\t"
-         << StepCount << endl;
+    cout << "1/gamma* = " << ExpectedY << ", \t" 
+         << "Loss = " << PrevLoss << ",\t" << endl
+         << "StepCount = " << StepCount << ",\t"
+         << "Optimal Value = " << AlphaDim * log(ExpectedY) << endl;
     return 0;
 }
